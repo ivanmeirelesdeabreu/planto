@@ -1,74 +1,78 @@
 # Sistema IoT de Irrigação Automatizada
 
-## Descrição
+Este repositório contém o código-fonte do backend de um **Sistema Inteligente de Irrigação Automatizada**, desenvolvido com foco em Internet das Coisas (IoT), automação residencial e boas práticas de engenharia de software.
 
-Projeto de automação de irrigação utilizando:
-
-* PostgreSQL
-* Django
-* APIs REST
-* Dispositivos IoT (ESP32 / ESP8266)
-* Sensores de umidade do solo
-* Mini bomba de água
-
-O objetivo do sistema é:
-
-* Receber leituras de umidade enviadas pelos dispositivos IoT
-* Armazenar histórico das leituras
-* Determinar automaticamente quando irrigar
-* Enviar comandos de irrigação aos dispositivos
-* Registrar confirmação da execução da irrigação
-* Permitir auditoria e rastreabilidade das operações
+O sistema integra dispositivos embarcados (ESP32/ESP8266), sensores de umidade do solo, banco de dados PostgreSQL e uma API REST desenvolvida em Python com Django.
 
 ---
 
-# Arquitetura
+## Objetivo do Projeto
 
-## Fluxo Geral
+O objetivo principal do projeto é permitir o **monitoramento contínuo da umidade do solo** e o **acionamento inteligente de um sistema de irrigação**, de forma automática ou manual, garantindo:
 
-1. O dispositivo IoT mede a umidade da terra
-2. O dispositivo envia os dados para a API Django
-3. O sistema grava as leituras no PostgreSQL
-4. O sistema verifica regras de irrigação
-5. Caso necessário, cria um comando de irrigação
-6. O dispositivo consulta periodicamente a API
-7. O dispositivo executa a irrigação
-8. O dispositivo confirma a execução
-9. O sistema registra a execução da bomba
+- uso eficiente de água;
+- automação de baixo custo;
+- registro e rastreabilidade das operações;
+- escalabilidade para múltiplos dispositivos.
 
 ---
 
-# Tecnologias
+## Funcionalidades Principais
 
-## Backend
-
-* Python
-* Django
-* Django REST Framework
-
-## Banco de Dados
-
-* PostgreSQL
-
-## IoT
-
-* ESP32
-* ESP8266
-
-## Comunicação
-
-* HTTP REST API
-* JSON
+- Recepção de leituras de umidade enviadas por dispositivos IoT;
+- Armazenamento histórico das leituras em banco de dados;
+- Avaliação automática das regras de irrigação;
+- Geração de comandos automáticos ou manuais;
+- Comunicação bidirecional entre servidor e dispositivos;
+- Registro da execução e auditoria da irrigação.
 
 ---
 
-# Estrutura do Banco
+## Arquitetura do Sistema
 
-O banco utiliza um schema separado chamado:
+### Fluxo Geral
 
-```sql
+1. O dispositivo IoT mede a umidade do solo;
+2. O dispositivo envia os dados para a API REST;
+3. O backend valida e armazena as leituras no PostgreSQL;
+4. O sistema avalia as regras de irrigação configuradas;
+5. Caso necessário, cria um comando de irrigação;
+6. O dispositivo consulta periodicamente a API (polling);
+7. O dispositivo executa a irrigação;
+8. O dispositivo confirma a execução;
+9. O sistema registra o histórico de execuções.
+
+---
+
+## Tecnologias Utilizadas
+
+### Backend
+- Python 3.11+
+- Django
+- Django REST Framework
+
+### Banco de Dados
+- PostgreSQL 14+
+- Extensão `pgcrypto` (UUID e funções criptográficas)
+
+### IoT
+- ESP32 / ESP8266
+- Sensores de umidade do solo
+- Atuadores (relé e bomba d’água)
+
+### Comunicação
+- HTTP
+- REST API
+- JSON
+
+---
+
+## Estrutura do Banco de Dados
+
+O banco utiliza um schema dedicado:
+
+
 CREATE SCHEMA iot;
-```
 
 Tabelas principais:
 
@@ -101,16 +105,15 @@ Isso evita:
 * Exposição do crescimento do sistema
 
 ---
+Autenticação por Token com Hash + Pepper
 
-## Tokens
+Cada dispositivo possui um token secreto;
+O token não é armazenado em texto puro;
+O banco armazena apenas o token_hash;
+O hash é gerado utilizando SHA-256 combinado com um pepper interno;
+O pepper permanece apenas no backend.
 
-Os tokens dos dispositivos não são armazenados em texto puro.
-
-O banco armazena apenas:
-
-```text
-token_hash
-```
+Esse modelo garante que mesmo em caso de vazamento do banco, os dispositivos não possam ser falsificados.
 
 ---
 
@@ -261,7 +264,7 @@ Versão recomendada:
 ## Criar banco
 
 ```sql
-CREATE DATABASE irrigacao_iot;
+CREATE DATABASE planto;
 ```
 
 ---
