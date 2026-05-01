@@ -1,0 +1,107 @@
+podman run -d \
+  --name planto-postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=planto \
+  -p 5432:5432 \
+  postgres:16
+
+  podman run -d \
+  --name planto-postgres \
+  --network planto-net \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=planto \
+  -p 5432:5432 \
+  -v planto_pgdata:/var/lib/postgresql/data \
+  postgres:16
+
+
+podman exec -it planto-postgres psql -U postgres -d planto
+
+\dt
+
+podman network create planto-net
+podman inspect planto-postgres | grep -A 20 Networks
+
+podman volume ls
+podman volume inspect planto_pgdata
+
+podman inspect planto-postgres
+
+podman system df -v
+
+podman run -e DEVICE_TOKEN_PEPPER='IoT-Pepper-2026-Prod-92dkS!'
+-e DJANGO_SECRET_KEY='django-secret-key-aqui' \
+
+podman run -it \
+--name planto-app \
+-e DEVICE_TOKEN_PEPPER='IoT-Pepper-2026-Prod-92dkS!'
+-v /home/ca80118852/app/planto/app:/app \
+-p 8000:8000 \
+planto-python
+
+podman run -it \
+--replace \
+--name planto-app \
+-v /home/ca80118852/app/planto/app:/app \
+-p 8000:8000 \
+planto-python
+
+
+
+
+#No diretório do Dockerfile:
+podman build --no-cache -t planto-python:latest .
+
+podman run -d \
+  --name planto-app \
+  -e DJANGO_SECRET_KEY='chave-dev' \
+  -e DEVICE_TOKEN_PEPPER='pepper-iot-fixo' \
+  -v /home/ca80118852/app/planto/app:/app \
+  -p 8000:8000 \
+  planto-python:latest
+
+
+  
+podman run -d \
+  --name planto-app \
+  -p 8000:8000 \
+  -e DEVICE_TOKEN_PEPPER='pepper-iot-fixo' \
+  planto-python:latest
+
+
+
+podman run -d \
+  --name planto-app \
+  --network planto-net \
+  -p 8000:8000 \
+  -e POSTGRES_HOST=planto-postgres \
+  -e POSTGRES_PORT=5432 \
+  -e POSTGRES_DB=planto \
+  -e POSTGRES_USER=planto \
+  -e POSTGRES_PASSWORD=planto \
+  -e DJANGO_SECRET_KEY=dev-key \
+  -e DEVICE_TOKEN_PEPPER=pepper-iot-fixo \
+  planto-python:latest  
+
+podman stop planto-app
+podman rm planto-app  
+
+podman build -t planto-python:latest .
+
+podman run -d \
+  --name planto-app \
+  --network planto-net \
+  -p 8000:8000 \
+  -v /home/ca80118852/app/planto/app:/app \
+  -e DEVICE_TOKEN_PEPPER=pepper-iot-fixo \
+  planto-python:latest    
+
+
+podman network inspect planto-net
+podman exec -it planto-app bash
+ping planto-postgres
+
+podman exec -it planto-app bash
+podman exec -it planto-app python3 manage.py runserver 0.0.0.0:8000
