@@ -4,16 +4,19 @@ from django.db import models
 
 class Dispositivo(models.Model):
     id = models.BigAutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    uuid = models.UUIDField(unique=True, editable=False)
     nome = models.CharField(max_length=100)
     descricao = models.TextField(blank=True, null=True)
     token_hash = models.CharField(max_length=255, unique=True)
     ativo = models.BooleanField(default=True)
-    data_criacao = models.DateTimeField(auto_now_add=True)
+    data_criacao = models.DateTimeField()
     ultimo_contato = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         db_table = '"iot"."iot_dispositivo"'
+        verbose_name = 'Dispositivo'
+        verbose_name_plural = 'Dispositivos'
+        managed = False
 
     def __str__(self):
         return f"{self.nome} ({self.uuid})"
@@ -21,20 +24,23 @@ class Dispositivo(models.Model):
 
 class LeituraUmidade(models.Model):
     id = models.BigAutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    uuid = models.UUIDField(unique=True, editable=False)
     dispositivo = models.ForeignKey(Dispositivo, on_delete=models.CASCADE, db_column='dispositivo_id', related_name='leituras')
     data_hora = models.DateTimeField()
     umidade = models.DecimalField(max_digits=5, decimal_places=2)
     bateria = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     payload_json = models.JSONField(blank=True, null=True)
-    data_recebimento = models.DateTimeField(auto_now_add=True)
+    data_recebimento = models.DateTimeField()
 
     class Meta:
         db_table = '"iot"."leitura_umidade"'
+        verbose_name = 'Leitura de Umidade'
+        verbose_name_plural = 'Leituras de Umidade'
         indexes = [
             models.Index(fields=['dispositivo','-data_hora'], name='idx_leitura_disp_data'),
             models.Index(fields=['-data_hora'], name='idx_leitura_data'),
         ]
+        managed = False
 
     def __str__(self):
         return f"{self.dispositivo.nome} {self.data_hora} {self.umidade}%"
@@ -42,16 +48,19 @@ class LeituraUmidade(models.Model):
 
 class ConfiguracaoIrrigacao(models.Model):
     id = models.BigAutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    uuid = models.UUIDField(unique=True, editable=False)
     dispositivo = models.ForeignKey(Dispositivo, on_delete=models.CASCADE, db_column='dispositivo_id', related_name='configuracoes')
     umidade_minima = models.DecimalField(max_digits=5, decimal_places=2)
     segundos_irrigacao = models.IntegerField()
     intervalo_minimo_minutos = models.IntegerField(default=30)
     ativo = models.BooleanField(default=True)
-    data_criacao = models.DateTimeField(auto_now_add=True)
+    data_criacao = models.DateTimeField()
 
     class Meta:
         db_table = '"iot"."configuracao_irrigacao"'
+        verbose_name = 'Configuração de Irrigação'
+        verbose_name_plural = 'Configurações de Irrigação'
+        managed = False
 
     def __str__(self):
         return f"Config {self.dispositivo.nome} (min={self.umidade_minima}, seg={self.segundos_irrigacao})"
@@ -71,30 +80,32 @@ class ComandoIrrigacao(models.Model):
         AGENDADO = 'AGENDADO'
 
     id = models.BigAutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    uuid = models.UUIDField(unique=True, editable=False)
     dispositivo = models.ForeignKey(Dispositivo, on_delete=models.CASCADE, db_column='dispositivo_id', related_name='comandos')
     segundos_irrigacao = models.IntegerField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDENTE)
     origem = models.CharField(max_length=20, choices=Origem.choices, default=Origem.AUTO)
-    data_criacao = models.DateTimeField(auto_now_add=True)
+    data_criacao = models.DateTimeField()
     data_envio = models.DateTimeField(blank=True, null=True)
     data_confirmacao = models.DateTimeField(blank=True, null=True)
     observacao = models.TextField(blank=True, null=True)
 
     class Meta:
         db_table = '"iot"."comando_irrigacao"'
+        verbose_name = 'Comando de Irrigação'
+        verbose_name_plural = 'Comandos de Irrigação'
         indexes = [
             models.Index(fields=['status'], name='idx_comando_status'),
             models.Index(fields=['dispositivo'], name='idx_comando_disp'),
         ]
-
+        managed = False
     def __str__(self):
         return f"{self.dispositivo.nome} {self.status} {self.segundos_irrigacao}s"
 
 
 class ExecucaoIrrigacao(models.Model):
     id = models.BigAutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    uuid = models.UUIDField(unique=True, editable=False)
     comando = models.ForeignKey(ComandoIrrigacao, on_delete=models.CASCADE, db_column='comando_id', related_name='execucoes')
     dispositivo = models.ForeignKey(Dispositivo, on_delete=models.CASCADE, db_column='dispositivo_id', related_name='execucoes')
     data_inicio = models.DateTimeField()
@@ -103,14 +114,17 @@ class ExecucaoIrrigacao(models.Model):
     sucesso = models.BooleanField(blank=True, null=True)
     mensagem = models.TextField(blank=True, null=True)
     payload_json = models.JSONField(blank=True, null=True)
-    data_registro = models.DateTimeField(auto_now_add=True)
+    data_registro = models.DateTimeField()
 
     class Meta:
         db_table = '"iot"."execucao_irrigacao"'
+        verbose_name = 'Execução de Irrigação'
+        verbose_name_plural = 'Execuções de Irrigação'
         indexes = [
             models.Index(fields=['dispositivo'], name='idx_execucao_disp'),
             models.Index(fields=['comando'], name='idx_execucao_cmd'),
         ]
+        managed = False
 
     def __str__(self):
         return f"Exec {self.dispositivo.nome} ({self.sucesso})"
